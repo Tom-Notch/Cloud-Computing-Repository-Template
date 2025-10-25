@@ -10,42 +10,13 @@
 
 set -euo pipefail
 
-before_env="$(mktemp)"
-after_env="$(mktemp)"
-tmp_def="$(mktemp)"
-cleanup() { rm -f "${before_env}" "${after_env}" "${tmp_def}"; }
-trap cleanup EXIT
-
-env | sort >"${before_env}"
-
 set -a
 . "$(dirname "$0")"/variables.sh
 set +a
 
-after_env="$(mktemp)"
-trap 'rm -f "$after_env"' RETURN
-env | sort >"${after_env}"
-
-diff_env="$(
-	awk -F= '
-    NR==FNR { before[$1]=$0; next }
-    {
-      name=$1
-      if (!(name in before) || before[name] != $0)
-        printf " ${%s}", name
-    }
-  ' "${before_env}" "${after_env}"
-)"
-diff_env="${diff_env# }" # trim leading space
-
-envsubst "${diff_env}" <"$(dirname "$0")/../singularity/default.def" >"${tmp_def}"
-
-echo ">>> Substituted def file:"
-echo "----------------------------------------"
-cat "${tmp_def}"
-echo "----------------------------------------"
-
 singularity build \
 	--fix-perms \
+	--build-arg-file "$(dirname "$0")/../.env" \
+	--warn-unused-build-args \
 	"$(dirname "$0")/../${IMAGE_NAME}_${IMAGE_TAG}.sif" \
-	"${tmp_def}"
+	"$(dirname "$0")/../singularity/default.def"
