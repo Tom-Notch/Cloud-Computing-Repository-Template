@@ -1,36 +1,45 @@
-# New Cloud Computing Repository
+<h1 align="center">Cloud Computing Repository Template</h1>
 
-[![pre-commit](https://github.com/Tom-Notch/Cloud-Computing-Repository-Template/actions/workflows/pre-commit.yml/badge.svg)](https://github.com/Tom-Notch/Cloud-Computing-Repository-Template/actions/workflows/pre-commit.yml)
+<p align="center">
+  <em>A GitHub repository template for HPC and cloud workloads with Docker, Singularity, and Slurm</em>
+</p>
+
+<p align="center">
+  <a href="https://github.com/Tom-Notch/Cloud-Computing-Repository-Template/actions/workflows/pre-commit.yml"><img src="https://github.com/Tom-Notch/Cloud-Computing-Repository-Template/actions/workflows/pre-commit.yml/badge.svg" alt="pre-commit"></a>
+  <img src="https://img.shields.io/badge/Docker-Recommended-2496ed?logo=docker&logoColor=white" alt="Docker">
+  <img src="https://img.shields.io/badge/Singularity-HPC-8a2be2?logo=linux&logoColor=white" alt="Singularity">
+  <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT">
+</p>
+
+A GitHub repository template for cloud computing and HPC workloads. Combines Docker (for local/cloud machines) with Singularity/Apptainer (for HPC clusters where Docker is unavailable), plus Slurm job scripts.
+
+> **TLDR:** Search for `todo` and update all occurrences to your desired name. Docker and Singularity are optional if all dependencies can be installed directly on the HPC shell.
 
 ## Dependencies
 
-- [Docker](https://docs.docker.com/get-docker/)
-- [Singularity/Apptainer](https://apptainer.org/)
+- [Docker](https://docs.docker.com/get-docker/) — for local development and building images
+- [Singularity/Apptainer](https://apptainer.org/) — for running on HPC clusters
 
-## Usage Guidelines
-
-TLDR: Search for `todo` and update all occurrences to your desired name
-
-Docker and singularity is not a must unless you cannot install some dependencies locally on HPC shell environment due to permission issue
+## Usage
 
 ### Base Repository
 
 1. Change [LICENSE](LICENSE) if necessary
-
-1. Modify [.pre-commit-config.yaml](.pre-commit-config.yaml) according to your need
-
+1. Modify [.pre-commit-config.yaml](.pre-commit-config.yaml) according to your needs
 1. Modify/add GitHub workflow status badges in [README.md](README.md)
 
 ### Docker Config
 
-Continue on a machine where you have docker permission, HPC clusters usually restrict docker access for security reasons
+> Continue on a machine where you have Docker permission — HPC clusters usually restrict Docker access for security reasons.
 
 1. Fill in all `todo-*` placeholders directly in [.env.example](.env.example) and commit — these are project-level constants, not secrets
 
-   - `todo-docker-user` refers to your Docker Hub account username
-   - `todo-base-image` is the base image the Dockerfile builds from, such as `nvidia/cuda:13.0.0-cudnn-devel-ubuntu24.04`
-   - `todo-image-name` is the name of the image you are building
-   - `todo-image-user` is the default user inside the image, used to determine the home folder
+   | Placeholder | Description |
+   |-------------|-------------|
+   | `todo-docker-user` | Your Docker Hub account username |
+   | `todo-base-image` | Base image the Dockerfile builds from (e.g. `nvidia/cuda:13.0.0-cudnn-devel-ubuntu24.04`) |
+   | `todo-image-name` | Name of the image you are building |
+   | `todo-image-user` | Default user inside the image, used to determine the home folder |
 
 1. Copy [.env.example](.env.example) to `.env` and add any user-specific secrets or local overrides:
 
@@ -38,62 +47,64 @@ Continue on a machine where you have docker permission, HPC clusters usually res
    cp .env.example .env
    ```
 
-   - `.env` is gitignored and will NOT be committed — it is the right place for secrets and per-user values
-   - `.env` will be loaded automatically when you use docker compose for build/run/push
+   > `.env` is gitignored and will NOT be committed — it is the right place for secrets and per-user values. It is loaded automatically by docker compose.
 
 1. Modify the service name from `todo-service-name` to your service name in [docker-compose.yml](docker-compose.yml), add additional volume mounting options such as dataset directories
 
-1. Update [Dockerfile](docker/latest/Dockerfile) and [.dockerignore](.dockerignore)
+1. Update [Dockerfile](docker/latest/Dockerfile) and [.dockerignore](.dockerignore) — the existing Dockerfile includes screen & tmux config, oh-my-zsh, cmake, and other basic tools
 
-   - Existing dockerfile has screen & tmux config, oh-my-zsh, cmake, and other basic goodies
-   - Add any additional dependency installations at appropriate locations
+1. Run scripts to build, test, and push:
 
-1. [build_docker_image.sh](scripts/build_docker_image.sh) to build and test the image locally in your machine's architecture
+   | Script | Action |
+   |--------|--------|
+   | [build_docker_image.sh](scripts/build_docker_image.sh) | Build and test the image locally (uses `buildx` for multi-arch) |
+   | [run_docker_container.sh](scripts/run_docker_container.sh) | Run and test a built image (`docker compose up -d` also works) |
+   | [push_docker_image.sh](scripts/push_docker_image.sh) | Push the multi-arch image to Docker Hub |
 
-   - The scripts uses buildx to build multi-arch image, you can disable this by removing redundant archs in [docker-compose.yml](docker-compose.yml)
-   - Building stage does not have GPU access, if some of your dependencies need GPU, build them inside a running container and commit to the final image
-
-1. [run_docker_container.sh](scripts/run_docker_container.sh) or `docker compose up -d` to run and test a built image
-
-   - The service by default will mount the whole repository onto `CODE_FOLDER` inside the container so any modification inside also takes effect outside, which is useful when you use vscode remote extension to develop inside a running container with remote docker context
-   - You should be able to run and see GUI applications inside the container if `DISPLAY` is set correctly when you run the script
-
-1. [push_docker_image.sh](scripts/push_docker_image.sh) to push the multi-arch image to docker hub
-
-   - You should have the docker hub repository set up before pushing
+   > The service mounts the entire repository onto `CODE_FOLDER` inside the container — modifications inside are reflected outside, useful for VS Code remote development.
 
 ### Singularity Config
 
-Continue on the actual HPC cluster environment
+> Continue on the actual HPC cluster environment.
 
-1. [pull_singularity_image.sh](scripts/pull_singularity_image.sh) to build the singularity image locally
+1. Run [pull_singularity_image.sh](scripts/pull_singularity_image.sh) to build the Singularity image locally from the Docker image you pushed
 
-   - Singularity image can be built upon existing docker image
-   - You should see the image `todo-image-name_latest.def` after successfully built
+   > You should see `todo-image-name_latest.def` after a successful build.
 
-1. [run_singularity_instance.sh](scripts/run_singularity_instance.sh) to test the image
+1. Run [run_singularity_instance.sh](scripts/run_singularity_instance.sh) to test the image
 
-   - Add additional volume binding options to the script such as dataset directories, best practice is to define in `.env` then export in [variables.sh](scripts/variables.sh) with `resolve_host_path` to turn relative path into absolute real path
-   - Singularity instances by default have less environment isolation than docker containers unless you specify the additional options like the script
+   - Add additional volume bind options (e.g. dataset directories) — define them in `.env`, then export via [variables.sh](scripts/variables.sh) using `resolve_host_path` to convert relative paths to absolute paths
+   - Singularity instances have less environment isolation than Docker containers by default unless you pass the additional flags shown in the script
 
 ### Job Config
 
 1. Modify job specifications under `jobs/`
 
-   - Each (HPC) Slurm environment has different partition definitions, which are often heterogeneous, you can query this by `sinfo` with some options
-   - `--ntasks-per-node` specifies number of parallelization, and it's convenient to tie other resources to task, e.g., `--gpus-per-task`, `--cpus-per-task`, `--mem-per-gpu`, so that you only need to increase ntasks to scale up on a node
-   - All the jobs have `-l`(login) options in shebang so that any command working in your current shell environment should also run as a job
+   <details>
+   <summary>Slurm tips</summary>
 
-1. `sbatch jobs/your-cluster/your-job.job` or `jobs/your-cluster/your-job.job` to submit jobs
+   - Query your cluster's partition layout with `sinfo`
+   - Tie resources to tasks for easy scaling: `--ntasks-per-node`, `--gpus-per-task`, `--cpus-per-task`, `--mem-per-gpu`
+   - All jobs use `-l` (login) in the shebang so any command available in your login shell also works as a job
 
-   - You should see a file `todo_your_job_name_slurm_job_id.out` in the base folder of this repository, which contains job logs
+   </details>
 
-1. Recommend [turm](https://github.com/kabouzeid/turm) for job monitor outside the job, use `turm -u your-slurm-user` after installation
+1. Submit and monitor jobs:
+
+   ```shell
+   sbatch jobs/your-cluster/your-job.job
+   ```
+
+   > Output logs appear as `todo_your_job_name_<slurm_job_id>.out` in the repository root.
+
+1. Recommend [turm](https://github.com/kabouzeid/turm) for job monitoring — `turm -u your-slurm-user`
 
 ## Developer Quick Start
 
-- Run [dev_setup.sh](scripts/dev_setup.sh) to setup the development environment
+```shell
+bash scripts/dev_setup.sh
+```
 
 ## Maintainer
 
-- Mukai (Tom Notch) Yu: [mukaiy@andrew.cmu.edu](mailto:mukaiy@andrew.cmu.edu)
+[Mukai (Tom Notch) Yu](mailto:mukaiy@andrew.cmu.edu)
