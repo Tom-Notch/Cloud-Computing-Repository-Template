@@ -25,9 +25,15 @@ Docker and singularity is not a must unless you cannot install some dependencies
 
 Continue on a machine where you have docker permission, HPC clusters usually restrict docker access for security reasons
 
-1. Modify `todo-docker-user`, `todo-base-image`, `todo-image-name`, `todo-image-user` in [.env](.env)
+1. Copy [.env.example](.env.example) to `.env`:
 
-   - [.env](.env) will be loaded when you use docker compose for build/run/push
+   ```shell
+   cp .env.example .env
+   ```
+
+1. Modify `todo-docker-user`, `todo-base-image`, `todo-image-name`, `todo-image-user` in `.env`
+
+   - `.env` will be loaded when you use docker compose for build/run/push
    - `todo-docker-user` refers to your docker hub account username
    - `todo-base-image` is the image dockerfile is based on, such as `nvidia/cuda:13.0.0-cudnn-devel-ubuntu24.04`
    - `todo-image-user` refers to the default user inside the image, which is used to determine home folder
@@ -64,7 +70,7 @@ Continue on the actual HPC cluster environment
 
 1. [run_singularity_instance.sh](scripts/run_singularity_instance.sh) to test the image
 
-   - Add additional volume binding options to the script such as dataset directories, best practice is to define in [.env](.env) then export in [variables.sh](scripts/variables.sh) with `resolve_host_path` to turn relative path into absolute real path
+   - Add additional volume binding options to the script such as dataset directories, best practice is to define in `.env` then export in [variables.sh](scripts/variables.sh) with `resolve_host_path` to turn relative path into absolute real path
    - Singularity instances by default have less environment isolation than docker containers unless you specify the additional options like the script
 
 ### Job Config
